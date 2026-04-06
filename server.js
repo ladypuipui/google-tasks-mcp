@@ -8,6 +8,7 @@
 const https = require("https");
 const http = require("http");
 const path = require("path");
+const crypto = require("crypto");
 
 const PORT = process.env.PORT || 8080;
 
@@ -28,7 +29,10 @@ async function getAccessToken() {
 
   const res = await httpsPost("oauth2.googleapis.com", "/token", body);
   const data = JSON.parse(res);
-  if (!data.access_token) throw new Error(`Token refresh failed: ${res}`);
+  if (!data.access_token) {
+    console.error("Token refresh failed:", res);
+    throw new Error("Authentication error");
+  }
   accessToken = data.access_token;
   tokenExpiry = Date.now() + data.expires_in * 1000;
   return accessToken;
@@ -169,7 +173,7 @@ const server = http.createServer(async (req, res) => {
 
   // SSE endpoint
   if (req.method === "GET" && url.pathname === "/sse") {
-    const sessionId = Math.random().toString(36).slice(2);
+    const sessionId = crypto.randomBytes(32).toString("hex");
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
