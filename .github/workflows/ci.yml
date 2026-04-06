@@ -38,3 +38,35 @@ jobs:
             echo "Smoke test failed: $OUTPUT"
             exit 1
           fi
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Secret scan
+        run: |
+          # Google OAuth クライアントシークレットのパターン
+          if git ls-files | xargs grep -rE "GOCSPX-[A-Za-z0-9_-]{28}" 2>/dev/null; then
+            echo "ERROR: Google Client Secret が検出されました"
+            exit 1
+          fi
+          # Google リフレッシュトークンのパターン
+          if git ls-files | xargs grep -rE "1//[A-Za-z0-9_-]{40,}" 2>/dev/null; then
+            echo "ERROR: Google Refresh Token が検出されました"
+            exit 1
+          fi
+          # .env ファイルが追跡されていないか確認
+          if git ls-files | grep -q "^\.env$"; then
+            echo "ERROR: .env がコミットされています"
+            exit 1
+          fi
+          echo "Secret scan passed"
