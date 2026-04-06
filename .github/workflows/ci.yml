@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: |
+          node --check server.js
+          node --check index.js
+
+      - name: Smoke test (server starts and /sse responds)
+        run: |
+          GOOGLE_CLIENT_ID=dummy \
+          GOOGLE_CLIENT_SECRET=dummy \
+          GOOGLE_REFRESH_TOKEN=dummy \
+          node server.js &
+          SERVER_PID=$!
+          sleep 2
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8080/sse)
+          kill $SERVER_PID
+          if [ "$STATUS" != "200" ]; then
+            echo "Expected 200, got $STATUS"
+            exit 1
+          fi
+          echo "Smoke test passed (HTTP $STATUS)"
