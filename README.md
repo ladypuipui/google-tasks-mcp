@@ -90,6 +90,36 @@ gcloud run deploy google-tasks-mcp \
 
 デプロイ後、Claude の MCP 設定に `https://<your-cloud-run-url>/sse` を指定してください。
 
+## Cowork での使い方
+
+Cloud Run にデプロイ後、Cowork の MCP コネクタとして接続できます。
+
+### MCP コネクタの追加
+
+Cowork の設定画面でカスタム MCP サーバーを追加し、以下の設定を入力してください：
+
+| 項目 | 値 |
+|---|---|
+| Type | SSE |
+| URL | `https://<your-cloud-run-url>/sse` |
+
+`<your-cloud-run-url>` は `gcloud run deploy` 後に表示される URL です。
+
+### .mcp.json で管理する場合
+
+プロジェクトルートに `.mcp.json` を作成することでも設定できます：
+
+```json
+{
+  "mcpServers": {
+    "google-tasks": {
+      "type": "sse",
+      "url": "https://<your-cloud-run-url>/sse"
+    }
+  }
+}
+```
+
 ## ローカルでのテスト（HTTP モード）
 
 ```bash
