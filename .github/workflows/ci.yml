@@ -22,6 +22,9 @@ jobs:
           node --check server.js
           node --check index.js
 
+      - name: Security regression tests
+        run: node test/security.test.js
+
       - name: Smoke test (server starts and /sse responds)
         run: |
           GOOGLE_CLIENT_ID=dummy \
