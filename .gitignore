@@ -1,11 +1,6 @@
 # 認証情報
 .env
 
-# SSL証明書・秘密鍵
-*.pem
-*.key
-*.crt
-
 # Node.js
 node_modules/
 npm-debug.log*

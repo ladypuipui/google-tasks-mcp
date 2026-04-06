@@ -63,7 +63,7 @@ GOOGLE_REFRESH_TOKEN=your_refresh_token_here
   "mcpServers": {
     "google-tasks": {
       "command": "node",
-      "args": ["/path/to/google-tasks-server/index.js"],
+      "args": ["/path/to/google-tasks-mcp/index.js"],
       "env": {
         "GOOGLE_CLIENT_ID": "your_client_id",
         "GOOGLE_CLIENT_SECRET": "your_client_secret",
