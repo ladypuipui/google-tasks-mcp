@@ -25,22 +25,8 @@ jobs:
       - name: Security regression tests
         run: node test/security.test.js
 
-      - name: Smoke test (server starts and /sse responds)
-        run: |
-          GOOGLE_CLIENT_ID=dummy \
-          GOOGLE_CLIENT_SECRET=dummy \
-          GOOGLE_REFRESH_TOKEN=dummy \
-          node server.js &
-          SERVER_PID=$!
-          sleep 2
-          OUTPUT=$(curl -s -N --max-time 2 http://localhost:8080/sse 2>/dev/null || true)
-          kill $SERVER_PID
-          if echo "$OUTPUT" | grep -q "event: endpoint"; then
-            echo "Smoke test passed"
-          else
-            echo "Smoke test failed: $OUTPUT"
-            exit 1
-          fi
+      - name: HTTP endpoint tests
+        run: node test/http-endpoints.test.js
 
   security:
     runs-on: ubuntu-latest
