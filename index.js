@@ -197,6 +197,7 @@ async function callTool(name, args) {
         title: t.title,
         status: t.status,
         due: t.due || null,
+        completed: t.completed || null,
         notes: t.notes || null,
       }));
     }

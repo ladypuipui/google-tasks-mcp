@@ -138,7 +138,7 @@ const TOOLS = [
 async function callTool(name, args) {
   switch (name) {
     case "list_task_lists": return (await listTaskLists()).map((l) => ({ id: l.id, title: l.title }));
-    case "list_tasks": return (await listTasks(args?.taskListId, args?.showCompleted ?? false)).map((t) => ({ id: t.id, title: t.title, status: t.status, due: t.due || null, notes: t.notes || null }));
+    case "list_tasks": return (await listTasks(args?.taskListId, args?.showCompleted ?? false)).map((t) => ({ id: t.id, title: t.title, status: t.status, due: t.due || null, completed: t.completed || null, notes: t.notes || null }));
     case "create_task": return createTask(args?.taskListId, args.title, args?.notes, args?.due);
     case "update_task": {
       const p = {};
