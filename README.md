@@ -81,7 +81,7 @@ gcloud run deploy google-tasks-mcp \
   --source . \
   --region asia-northeast1 \
   --allow-unauthenticated \
-  --min-instances 1 \
+  --min-instances 0 \
   --timeout 3600 \
   --set-env-vars "GOOGLE_CLIENT_ID=$(grep GOOGLE_CLIENT_ID .env | cut -d= -f2),GOOGLE_CLIENT_SECRET=$(grep GOOGLE_CLIENT_SECRET .env | cut -d= -f2),GOOGLE_REFRESH_TOKEN=$(grep GOOGLE_REFRESH_TOKEN .env | cut -d= -f2)"
 ```
