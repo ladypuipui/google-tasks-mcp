@@ -99,7 +99,7 @@ async function getDefaultListId() {
 }
 async function listTasks(taskListId, showCompleted = false) {
   const id = taskListId || (await getDefaultListId());
-  const q = new URLSearchParams({ maxResults: "100", showCompleted: String(showCompleted) });
+  const q = new URLSearchParams({ maxResults: "100", showCompleted: String(showCompleted), showHidden: String(showCompleted) });
   const d = await gapi("GET", `/tasks/v1/lists/${encodeURIComponent(id)}/tasks?${q}`);
   return d.items || [];
 }
