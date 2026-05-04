@@ -103,12 +103,13 @@ async function listTasks(taskListId, showCompleted = false) {
   const d = await gapi("GET", `/tasks/v1/lists/${encodeURIComponent(id)}/tasks?${q}`);
   return d.items || [];
 }
-async function createTask(taskListId, title, notes, due) {
+async function createTask(taskListId, title, notes, due, parent) {
   const id = taskListId || (await getDefaultListId());
   const body = { title };
   if (notes) body.notes = notes;
   if (due) body.due = due;
-  return gapi("POST", `/tasks/v1/lists/${encodeURIComponent(id)}/tasks`, body);
+  const q = parent ? `?parent=${encodeURIComponent(parent)}` : "";
+  return gapi("POST", `/tasks/v1/lists/${encodeURIComponent(id)}/tasks${q}`, body);
 }
 async function updateTask(taskListId, taskId, patch) {
   const id = taskListId || (await getDefaultListId());
@@ -129,7 +130,7 @@ async function deleteTask(taskListId, taskId) {
 const TOOLS = [
   { name: "list_task_lists", description: "List all Google Task lists", inputSchema: { type: "object", properties: {} } },
   { name: "list_tasks", description: "List tasks in a task list", inputSchema: { type: "object", properties: { taskListId: { type: "string" }, showCompleted: { type: "boolean" } } } },
-  { name: "create_task", description: "Create a new task", inputSchema: { type: "object", required: ["title"], properties: { title: { type: "string" }, notes: { type: "string" }, due: { type: "string" }, taskListId: { type: "string" } } } },
+  { name: "create_task", description: "Create a new task", inputSchema: { type: "object", required: ["title"], properties: { title: { type: "string" }, notes: { type: "string" }, due: { type: "string" }, taskListId: { type: "string" }, parent: { type: "string", description: "Parent task ID to create as a subtask" } } } },
   { name: "update_task", description: "Update a task", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" }, title: { type: "string" }, notes: { type: "string" }, due: { type: "string" } } } },
   { name: "complete_task", description: "Mark a task as completed", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" } } } },
   { name: "delete_task", description: "Delete a task", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" } } } },
@@ -138,8 +139,8 @@ const TOOLS = [
 async function callTool(name, args) {
   switch (name) {
     case "list_task_lists": return (await listTaskLists()).map((l) => ({ id: l.id, title: l.title }));
-    case "list_tasks": return (await listTasks(args?.taskListId, args?.showCompleted ?? false)).map((t) => ({ id: t.id, title: t.title, status: t.status, due: t.due || null, completed: t.completed || null, notes: t.notes || null }));
-    case "create_task": return createTask(args?.taskListId, args.title, args?.notes, args?.due);
+    case "list_tasks": return (await listTasks(args?.taskListId, args?.showCompleted ?? false)).map((t) => ({ id: t.id, title: t.title, status: t.status, due: t.due || null, completed: t.completed || null, notes: t.notes || null, parent: t.parent || null }));
+    case "create_task": return createTask(args?.taskListId, args.title, args?.notes, args?.due, args?.parent);
     case "update_task": {
       const p = {};
       if (args.title !== undefined) p.title = args.title;
