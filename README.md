@@ -15,8 +15,8 @@ Google Tasks を Claude から操作できるようにする MCP (Model Context 
 | ツール | 説明 |
 |---|---|
 | `list_task_lists` | タスクリストを一覧表示 |
-| `list_tasks` | タスクを一覧表示（`showCompleted: true` で完了済みも取得、完了日時も返す） |
-| `create_task` | タスクを新規作成 |
+| `list_tasks` | タスクを一覧表示（`showCompleted: true` で完了済みも取得、完了日時も返す）。サブタスクは `parent` フィールドに親タスクのIDが入る |
+| `create_task` | タスクを新規作成。`parent` に親タスクのIDを指定するとサブタスクとして作成される |
 | `update_task` | タスクのタイトル・メモ・期日を更新 |
 | `complete_task` | タスクを完了にする |
 | `delete_task` | タスクを削除 |
