@@ -30,7 +30,32 @@ Google Tasks を Claude から操作できるようにする MCP (Model Context 
 | `update_task` | タスクのタイトル・メモ・期日を更新 |
 | `complete_task` | タスクを完了にする |
 | `delete_task` | タスクを削除 |
-| `move_task` | タスクを別のリストに移動（`fromTaskListId` → `toTaskListId`）。内部で取得→作成→削除を行うためタスクIDが変わる |
+| `move_task` | タスクを並び替え・移動する。`toTaskListId` を省略すると同一リスト内での並び替え。`previous` に直前に置きたいタスクのIDを指定（省略するとリスト先頭）。別リストへの移動時はタスクIDが変わる |
+
+### タスクの並び替え（`move_task`）
+
+`toTaskListId` を省略すると同一リスト内での並び替えになります。Google Tasks API のネイティブ `move` エンドポイントを使用するため、タスクIDは変わりません。
+
+| パラメータ | 必須 | 説明 |
+|---|---|---|
+| `taskId` | ✓ | 移動・並び替えするタスクのID |
+| `fromTaskListId` | | 元のタスクリストID（省略時はデフォルトリスト） |
+| `toTaskListId` | | 移動先リストID（**省略すると同一リスト内の並び替え**） |
+| `previous` | | このタスクIDの**直後**に配置する（省略するとリスト先頭） |
+| `parent` | | 親タスクID（サブタスクとして入れ子にする場合） |
+
+**例：スプリントバックログのように並び替える**
+
+```
+# タスクAをリスト先頭へ
+move_task(taskId="A")
+
+# タスクBをタスクAの直後へ
+move_task(taskId="B", previous="A")
+
+# タスクCをタスクBの直後へ
+move_task(taskId="C", previous="B")
+```
 
 ## セットアップ
 

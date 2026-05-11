@@ -121,18 +121,31 @@ async function deleteTaskList(taskListId) {
   return { deleted: true };
 }
 
-async function moveTask(fromListId, taskId, toListId) {
+async function moveTask(fromListId, taskId, toListId, previous, parent) {
   const srcId = fromListId || (await getDefaultListId());
-  const dstId = toListId || (await getDefaultListId());
-  if (srcId === dstId) throw new Error("移動元と移動先が同じリストです");
+  const dstId = toListId || srcId;
 
+  if (srcId === dstId) {
+    // 同一リスト内での並び替え — Tasks API の move エンドポイントを使用
+    const q = new URLSearchParams();
+    if (previous !== undefined) q.set("previous", previous);
+    if (parent !== undefined) q.set("parent", parent);
+    const qs = q.toString() ? `?${q}` : "";
+    return gapi("POST", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}/move${qs}`);
+  }
+
+  // 異なるリストへの移動 — タスクを複製して削除
   const task = await gapi("GET", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
   const body = { title: task.title };
   if (task.notes) body.notes = task.notes;
   if (task.due) body.due = task.due;
   if (task.status) body.status = task.status;
 
-  const created = await gapi("POST", `/tasks/v1/lists/${encodeURIComponent(dstId)}/tasks`, body);
+  const q = new URLSearchParams();
+  if (previous !== undefined) q.set("previous", previous);
+  if (parent !== undefined) q.set("parent", parent);
+  const qs = q.toString() ? `?${q}` : "";
+  const created = await gapi("POST", `/tasks/v1/lists/${encodeURIComponent(dstId)}/tasks${qs}`, body);
   await gapi("DELETE", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
   return created;
 }
@@ -211,14 +224,16 @@ const TOOLS = [
   },
   {
     name: "move_task",
-    description: "Move a task from one task list to another",
+    description: "Move or reorder a task. Omit toTaskListId to reorder within the same list. Use 'previous' to place the task after a specific task (omit to move to the top).",
     inputSchema: {
       type: "object",
-      required: ["taskId", "toTaskListId"],
+      required: ["taskId"],
       properties: {
         taskId: { type: "string", description: "ID of the task to move" },
         fromTaskListId: { type: "string", description: "Source task list ID (omit for default list)" },
-        toTaskListId: { type: "string", description: "Destination task list ID" },
+        toTaskListId: { type: "string", description: "Destination task list ID (omit to reorder within same list)" },
+        previous: { type: "string", description: "ID of the task after which to place this task. Omit to move to top." },
+        parent: { type: "string", description: "ID of the parent task (omit for top-level)" },
       },
     },
   },
@@ -291,7 +306,7 @@ async function callTool(name, args) {
     case "delete_task":
       return deleteTask(args?.taskListId, args.taskId);
     case "move_task":
-      return moveTask(args?.fromTaskListId, args.taskId, args.toTaskListId);
+      return moveTask(args?.fromTaskListId, args.taskId, args?.toTaskListId, args?.previous, args?.parent);
     case "create_task_list":
       return createTaskList(args.title);
     case "update_task_list":
