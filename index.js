@@ -108,6 +108,35 @@ async function deleteTask(taskListId, taskId) {
   return { deleted: true };
 }
 
+async function createTaskList(title) {
+  return gapi("POST", "/tasks/v1/users/@me/lists", { title });
+}
+
+async function updateTaskList(taskListId, title) {
+  return gapi("PATCH", `/tasks/v1/users/@me/lists/${encodeURIComponent(taskListId)}`, { title });
+}
+
+async function deleteTaskList(taskListId) {
+  await gapi("DELETE", `/tasks/v1/users/@me/lists/${encodeURIComponent(taskListId)}`);
+  return { deleted: true };
+}
+
+async function moveTask(fromListId, taskId, toListId) {
+  const srcId = fromListId || (await getDefaultListId());
+  const dstId = toListId || (await getDefaultListId());
+  if (srcId === dstId) throw new Error("移動元と移動先が同じリストです");
+
+  const task = await gapi("GET", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
+  const body = { title: task.title };
+  if (task.notes) body.notes = task.notes;
+  if (task.due) body.due = task.due;
+  if (task.status) body.status = task.status;
+
+  const created = await gapi("POST", `/tasks/v1/lists/${encodeURIComponent(dstId)}/tasks`, body);
+  await gapi("DELETE", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
+  return created;
+}
+
 // ── Tool definitions ─────────────────────────────────────────────────────────
 
 const TOOLS = [
@@ -180,6 +209,53 @@ const TOOLS = [
       },
     },
   },
+  {
+    name: "move_task",
+    description: "Move a task from one task list to another",
+    inputSchema: {
+      type: "object",
+      required: ["taskId", "toTaskListId"],
+      properties: {
+        taskId: { type: "string", description: "ID of the task to move" },
+        fromTaskListId: { type: "string", description: "Source task list ID (omit for default list)" },
+        toTaskListId: { type: "string", description: "Destination task list ID" },
+      },
+    },
+  },
+  {
+    name: "create_task_list",
+    description: "Create a new task list",
+    inputSchema: {
+      type: "object",
+      required: ["title"],
+      properties: {
+        title: { type: "string", description: "Name of the new task list" },
+      },
+    },
+  },
+  {
+    name: "update_task_list",
+    description: "Rename a task list",
+    inputSchema: {
+      type: "object",
+      required: ["taskListId", "title"],
+      properties: {
+        taskListId: { type: "string" },
+        title: { type: "string", description: "New name for the task list" },
+      },
+    },
+  },
+  {
+    name: "delete_task_list",
+    description: "Delete a task list and all its tasks permanently",
+    inputSchema: {
+      type: "object",
+      required: ["taskListId"],
+      properties: {
+        taskListId: { type: "string" },
+      },
+    },
+  },
 ];
 
 // ── Tool handler ──────────────────────────────────────────────────────────────
@@ -214,6 +290,14 @@ async function callTool(name, args) {
       return completeTask(args?.taskListId, args.taskId);
     case "delete_task":
       return deleteTask(args?.taskListId, args.taskId);
+    case "move_task":
+      return moveTask(args?.fromTaskListId, args.taskId, args.toTaskListId);
+    case "create_task_list":
+      return createTaskList(args.title);
+    case "update_task_list":
+      return updateTaskList(args.taskListId, args.title);
+    case "delete_task_list":
+      return deleteTaskList(args.taskListId);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

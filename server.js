@@ -124,6 +124,29 @@ async function deleteTask(taskListId, taskId) {
   await gapi("DELETE", `/tasks/v1/lists/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}`);
   return { deleted: true };
 }
+async function createTaskList(title) {
+  return gapi("POST", "/tasks/v1/users/@me/lists", { title });
+}
+async function updateTaskList(taskListId, title) {
+  return gapi("PATCH", `/tasks/v1/users/@me/lists/${encodeURIComponent(taskListId)}`, { title });
+}
+async function deleteTaskList(taskListId) {
+  await gapi("DELETE", `/tasks/v1/users/@me/lists/${encodeURIComponent(taskListId)}`);
+  return { deleted: true };
+}
+async function moveTask(fromListId, taskId, toListId) {
+  const srcId = fromListId || (await getDefaultListId());
+  const dstId = toListId || (await getDefaultListId());
+  if (srcId === dstId) throw new Error("移動元と移動先が同じリストです");
+  const task = await gapi("GET", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
+  const body = { title: task.title };
+  if (task.notes) body.notes = task.notes;
+  if (task.due) body.due = task.due;
+  if (task.status) body.status = task.status;
+  const created = await gapi("POST", `/tasks/v1/lists/${encodeURIComponent(dstId)}/tasks`, body);
+  await gapi("DELETE", `/tasks/v1/lists/${encodeURIComponent(srcId)}/tasks/${encodeURIComponent(taskId)}`);
+  return created;
+}
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
@@ -134,6 +157,10 @@ const TOOLS = [
   { name: "update_task", description: "Update a task", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" }, title: { type: "string" }, notes: { type: "string" }, due: { type: "string" } } } },
   { name: "complete_task", description: "Mark a task as completed", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" } } } },
   { name: "delete_task", description: "Delete a task", inputSchema: { type: "object", required: ["taskId"], properties: { taskId: { type: "string" }, taskListId: { type: "string" } } } },
+  { name: "move_task", description: "Move a task from one task list to another", inputSchema: { type: "object", required: ["taskId", "toTaskListId"], properties: { taskId: { type: "string" }, fromTaskListId: { type: "string" }, toTaskListId: { type: "string" } } } },
+  { name: "create_task_list", description: "Create a new task list", inputSchema: { type: "object", required: ["title"], properties: { title: { type: "string" } } } },
+  { name: "update_task_list", description: "Rename a task list", inputSchema: { type: "object", required: ["taskListId", "title"], properties: { taskListId: { type: "string" }, title: { type: "string" } } } },
+  { name: "delete_task_list", description: "Delete a task list and all its tasks permanently", inputSchema: { type: "object", required: ["taskListId"], properties: { taskListId: { type: "string" } } } },
 ];
 
 async function callTool(name, args) {
@@ -150,6 +177,10 @@ async function callTool(name, args) {
     }
     case "complete_task": return completeTask(args?.taskListId, args.taskId);
     case "delete_task": return deleteTask(args?.taskListId, args.taskId);
+    case "move_task": return moveTask(args?.fromTaskListId, args.taskId, args.toTaskListId);
+    case "create_task_list": return createTaskList(args.title);
+    case "update_task_list": return updateTaskList(args.taskListId, args.title);
+    case "delete_task_list": return deleteTaskList(args.taskListId);
     default: throw new Error(`Unknown tool: ${name}`);
   }
 }

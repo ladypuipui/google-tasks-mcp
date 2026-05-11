@@ -12,14 +12,25 @@ Google Tasks を Claude から操作できるようにする MCP (Model Context 
 
 ## 使えるツール
 
+### タスクリスト操作
+
 | ツール | 説明 |
 |---|---|
 | `list_task_lists` | タスクリストを一覧表示 |
+| `create_task_list` | タスクリストを新規作成 |
+| `update_task_list` | タスクリストの名前を変更 |
+| `delete_task_list` | タスクリストをすべてのタスクごと削除 |
+
+### タスク操作
+
+| ツール | 説明 |
+|---|---|
 | `list_tasks` | タスクを一覧表示（`showCompleted: true` で完了済みも取得、完了日時も返す）。サブタスクは `parent` フィールドに親タスクのIDが入る |
 | `create_task` | タスクを新規作成。`parent` に親タスクのIDを指定するとサブタスクとして作成される |
 | `update_task` | タスクのタイトル・メモ・期日を更新 |
 | `complete_task` | タスクを完了にする |
 | `delete_task` | タスクを削除 |
+| `move_task` | タスクを別のリストに移動（`fromTaskListId` → `toTaskListId`）。内部で取得→作成→削除を行うためタスクIDが変わる |
 
 ## セットアップ
 
