@@ -25,7 +25,10 @@ function test(name, fn) {
   }
 }
 
+// sessionId の生成は HTTP/SSE エントリ (server.js) にある
 const src = fs.readFileSync(`${__dirname}/../server.js`, "utf8");
+// 認証ロジックは共通コア (core.js) に集約されている
+const core = fs.readFileSync(`${__dirname}/../core.js`, "utf8");
 
 // ── Static analysis ───────────────────────────────────────────────────────────
 
@@ -48,18 +51,18 @@ test("crypto.randomBytes is used for session ID generation", () => {
 test("Raw token response is not exposed in thrown errors", () => {
   // `throw new Error(...${res}...)` のようなパターンがないことを確認
   const leakPattern = /throw new Error\(`[^`]*\$\{res\}[^`]*`\)/;
-  assert(!leakPattern.test(src), "Raw response variable leaked in thrown error");
+  assert(!leakPattern.test(core), "Raw response variable leaked in thrown error");
 });
 
 test("Token refresh failure uses generic error message", () => {
   assert(
-    src.includes('"Authentication error"') || src.includes("'Authentication error'"),
+    core.includes('"Authentication error"') || core.includes("'Authentication error'"),
     "Generic authentication error message not found"
   );
 });
 
 test("Token refresh failure logs detail to console.error (not to client)", () => {
-  assert(src.includes("console.error"), "console.error not found for token failure logging");
+  assert(core.includes("console.error"), "console.error not found for token failure logging");
 });
 
 // ── Behavioral tests ──────────────────────────────────────────────────────────

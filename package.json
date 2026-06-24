@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --env-file=.env server.js",
+    "start:http": "node --env-file=.env server.js",
+    "start:stdio": "node --env-file=.env index.js",
+    "auth": "node auth-setup.js",
+    "test": "node test/security.test.js && node test/http-endpoints.test.js"
   }
 }

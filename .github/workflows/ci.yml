@@ -19,6 +19,7 @@ jobs:
 
       - name: Syntax check
         run: |
+          node --check core.js
           node --check server.js
           node --check index.js
 
