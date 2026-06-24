@@ -1,0 +1,15 @@
+# HTTP/SSE モードで常駐させる構成。
+# 認証情報は .env から読み込む（.env.example を参照）。
+#   docker compose up -d   → http://localhost:8080/sse で接続
+#
+# stdio モードは1回限りの stdin/stdout 起動のため compose には向かない。
+# その場合は次のように直接起動する:
+#   docker run -i --rm --env-file .env google-tasks-mcp node index.js
+services:
+  google-tasks-mcp:
+    build: .
+    image: google-tasks-mcp
+    env_file: .env
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
